@@ -1,0 +1,72 @@
+<!-- AD-DOC DELIVERABLES LOGO BLOCK  – paste anywhere in <body> -->
+<style>
+/* ---------- Palette (matches your Night-Gold theme) ---------- */
+:root{
+  --midnight-blue:#0B192F;
+  --deep-blue:#172A46;
+  --light-gold:#FBBF24;
+  --muted-gold:rgba(251,191,36,.8);
+}
+
+/* ---------- Layout wrapper ---------- */
+.logo-wrap{display:inline-block;position:relative;}
+
+/* ---------- Hover shimmer ---------- */
+.logo-wrap::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(120deg,
+    transparent 0 45%,
+    rgba(255,255,255,.35) 50%,
+    transparent 55% 100%);
+  transform:translateX(-100%);
+  pointer-events:none;
+}
+.logo-wrap:hover::after{
+  transition:transform 1.6s cubic-bezier(.34,.22,.13,.89);
+  transform:translateX(100%);
+}
+
+/* ---------- Metallic pulse (runs only when in-view) ---------- */
+@keyframes pulse-metal{
+  0%,100%{filter:brightness(1);}
+  50%    {filter:brightness(1.25);}
+}
+@media (prefers-reduced-motion:no-preference){
+  .pulse-active img{animation:pulse-metal 3s ease-in-out infinite;}
+}
+</style>
+
+<a href="/" class="logo-wrap" aria-label="Home">
+  <picture>
+    <!-- Light-mode first -->
+    <source srcset="ad-doc-deliverables_light.svg"
+            type="image/svg"
+            media="(prefers-color-scheme: light)">
+    <source srcset="ad-doc-deliverables_light_bg.png"
+            type="image/png"
+            media="(prefers-color-scheme: light)">
+
+    <!-- Dark-mode / default -->
+    <source srcset="ad-doc-deliverables.svg" type="image/svg">
+    <img src="A_logo_in_retro_comic_book_and_vintage_aviation_il.png"
+         alt="AD-DOC DELIVERABLES logo" width="260" height="260"
+         style="display:block">
+  </picture>
+</a>
+
+<script>
+/* Trigger pulse only once the logo is ~30 % visible */
+document.addEventListener('DOMContentLoaded',()=>{
+  const logo=document.querySelector('.logo-wrap');
+  if(!logo)return;
+  const io=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        logo.classList.add('pulse-active');
+        io.disconnect();           // run once, then stop observing
+      }
+    });
+  },{threshold:0.3});
+  io.observe(logo);
+});
+</script>
