@@ -1,0 +1,26 @@
+name: Adamic evidence-link lint
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "tools/adamic_evidence_lint.py"
+      - ".github/workflows/adamic-evidence-lint.yml"
+  schedule:
+    - cron: "17 13 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run Adamic evidence lint
+        run: python tools/adamic_evidence_lint.py --site https://addocdeliverables.ca
