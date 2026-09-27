@@ -18,6 +18,7 @@ import json
 import os
 import re
 import sys
+import time
 from dataclasses import dataclass
 from typing import Iterable
 from urllib.error import HTTPError, URLError
@@ -56,7 +57,14 @@ class Result:
 
 
 def request_text(url: str, timeout: int) -> tuple[str, object]:
-    req = Request(url, headers={"User-Agent": USER_AGENT, "Accept": "text/html,application/json"})
+    req = Request(
+        url,
+        headers={
+            "User-Agent": USER_AGENT,
+            "Accept": "text/html,application/json",
+            "Cache-Control": "no-cache",
+        },
+    )
     try:
         with urlopen(req, timeout=timeout) as response:
             charset = response.headers.get_content_charset() or "utf-8"
@@ -89,9 +97,18 @@ def anchors(markup: str) -> list[Link]:
     return links
 
 
+def is_struck(paragraph: str) -> bool:
+    """A strip wrapped entirely in <del>/<s> is superseded apparatus, kept for the
+    record under the errata rule. It is not a live strip."""
+    inner = re.sub(r"^<p\b[^>]*>|</p>$", "", paragraph.strip(), flags=re.IGNORECASE)
+    return bool(re.fullmatch(r"\s*<(del|s)\b[^>]*>.*</\1>\s*", inner, flags=re.IGNORECASE | re.DOTALL))
+
+
 def evidence_strips(markup: str) -> list[str]:
     strips: list[str] = []
     for paragraph in re.findall(r"<p\b[^>]*>.*?</p>", markup, flags=re.IGNORECASE | re.DOTALL):
+        if is_struck(paragraph):
+            continue
         text = plain_text(paragraph)
         if re.match(r"^Evidence\s+(?:tier|mode)\s*:", text, flags=re.IGNORECASE):
             strips.append(paragraph)
@@ -138,6 +155,8 @@ def fetch_pages(site: str, timeout: int) -> list[dict]:
                 "page": page,
                 "status": "publish",
                 "_fields": "id,link,slug,title,content,status",
+                # Edge caches can serve pages from before the last edit.
+                "_lint": int(time.time()),
             }
         )
         url = f"{site}/wp-json/wp/v2/pages?{params}"
